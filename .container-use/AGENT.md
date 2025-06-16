@@ -1,1 +1,1 @@
-No instructions found. Please look around the filesystem and update me
+This environment is set up for Android app development using Java/Kotlin. Available tools: - Android SDK with command line tools - Gradle 8.5 - OpenJDK 17 - Git for version control. Use 'gradle' command to build Android projects. ANDROID_HOME is set to /opt/android-sdk. You need to accept SDK licenses before using SDK manager.

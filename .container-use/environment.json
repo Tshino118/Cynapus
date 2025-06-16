@@ -1,4 +1,19 @@
 {
   "workdir": "/workdir",
-  "base_image": "ubuntu:24.04"
+  "base_image": "debian:bullseye",
+  "setup_commands": [
+    "apt-get update",
+    "apt-get install -y openjdk-17-jdk wget unzip curl git",
+    "wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdtools.zip",
+    "mkdir -p /opt/android-sdk/cmdline-tools",
+    "unzip /tmp/cmdtools.zip -d /opt/android-sdk/cmdline-tools",
+    "mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest",
+    "wget https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip",
+    "unzip /tmp/gradle.zip -d /opt",
+    "ln -s /opt/gradle-8.5/bin/gradle /usr/local/bin/gradle"
+  ],
+  "env": [
+    "ANDROID_HOME=/opt/android-sdk",
+    "PATH=/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/usr/local/bin:$PATH"
+  ]
 }
