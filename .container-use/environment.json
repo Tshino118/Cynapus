@@ -1,6 +1,6 @@
 {
   "workdir": "/workdir",
-  "base_image": "debian:bullseye",
+  "base_image": "ubuntu:22.04",
   "setup_commands": [
     "apt-get update",
     "apt-get install -y openjdk-17-jdk wget unzip curl git",
