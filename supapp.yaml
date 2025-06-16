@@ -1,0 +1,98 @@
+appName: 生活管理アプリ
+
+summary:
+  purpose: ユーザーの生活（タスク, スケジュール, 健康, 家計, 目標）を統合管理・可視化し、ウェルビーイングの実現をサポートする。
+  features: モジュール式で、ユーザーが必要な機能を選択・カスタマイズ可能。
+  platform: 特定のプラットフォーム（iOS, Android, Web）に非依存。
+
+targetUsers:
+  - 効率化を求める学生・社会人
+  - 健康習慣を望む人
+  - 計画的な資産形成を目指す人
+  - アプリの複数利用が面倒な人
+  - 家族やパートナーと情報を共有したい人
+
+requirements:
+  functional:
+    basic:
+      user_management:
+        - アカウント登録（Email, SNS）
+        - プロフィール設定
+        - データ同期・バックアップ（マルチデバイス対応）
+      dashboard:
+        - 主要情報のサマリー表示
+        - 表示項目のカスタマイズ
+      notifications:
+        - 各種リマインダー（タスク期限, 予定, 服薬など）
+    
+    modules:
+      tasks:
+        name: タスク管理 (ToDo)
+        features:
+          - CRUD（作成, 編集, 削除）
+          - 期限日, 優先度設定
+          - 繰り返し設定
+          - サブタスク
+          - リスト, タグによる分類
+      schedule:
+        name: スケジュール管理 (カレンダー)
+        features:
+          - CRUD
+          - 表示切替（月, 週, 日）
+          - 外部カレンダー連携（双方向同期）
+          - 場所, 参加者, メモ登録
+      health:
+        name: 健康管理
+        sub_modules:
+          - type: 食事記録
+            features: [検索, 手動入力, 写真解析(OCR), カロリー/栄養素自動計算, グラフ化]
+          - type: 運動記録
+            features: [アクティビティ記録, デバイス連携(歩数計等), 消費カロリー計算]
+          - type: 睡眠記録
+            features: [手動記録, デバイス連携(睡眠の質分析)]
+          - type: バイタル記録
+            features: [体重, 体脂肪率, 血圧等, グラフ化]
+          - type: 服薬管理
+            features: [リマインダー設定, 服用履歴]
+      finance:
+        name: 家計管理
+        sub_modules:
+          - type: 収支記録
+            features: [手動入力, カテゴリカスタマイズ, レシートOCR]
+          - type: 予算管理
+            features: [カテゴリ別設定, 予実管理, 超過アラート]
+          - type: 資産連携 (オプション)
+            features: [金融機関API連携, 残高/利用履歴の自動取得, 総資産グラフ]
+          - type: レポート
+            features: [月次/年次レポート自動生成, グラフ化]
+      goals:
+        name: 目標・習慣化 (ハビットトラッカー)
+        features:
+          - 目標設定
+          - 達成状況の記録 (チェックイン)
+          - 継続日数, 達成率の可視化
+      info:
+        name: 情報管理 (メモ・日記)
+        features:
+          - 対応形式: [テキスト, 画像, 音声]
+          - 機能: [タグ付け, 全文検索, テンプレート]
+
+    sharing:
+      name: 情報共有機能
+      features:
+        - モジュール単位でのデータ共有
+        - 共有範囲・権限設定（閲覧/編集）
+
+  nonFunctional:
+    usability: [直感的UI/UX, ダークモード, アクセシビリティ配慮]
+    performance: [高速応答, バッテリー消費最適化, オフライン対応]
+    reliability: [データ正確性, 自動バックアップ/復元]
+    security: [通信暗号化(SSL/TLS), データ保護, プライバシーポリシー明記, 多要素認証(オプション)]
+    scalability_maintainability: [モジュール化アーキテクチャ, OSアップデート迅速対応]
+    compatibility: [マルチデバイス対応 (スマホ, タブレット, PC), マルチOS対応 (iOS, Android)]
+
+monetization_options:
+  - model: フリーミアム
+    details: 基本無料。高度な機能（データ連携, 高度分析, 広告非表示）を有料プラン（サブスク）で提供。
+  - model: 広告モデル
+    details: 全機能無料。広告表示で収益化。
