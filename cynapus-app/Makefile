@@ -13,7 +13,7 @@ GRADLE_WRAPPER := ./gradlew
 # Docker Configuration
 DOCKER_IMAGE := cynapus-android
 DOCKER_TAG := latest
-COMPOSE_FILE := docker-compose.yml
+COMPOSE_FILE := docker compose.yml
 
 # Android SDK Configuration
 ANDROID_HOME ?= /opt/android-sdk
@@ -181,51 +181,63 @@ docker-check: ## Check Docker environment
 	@echo "$(YELLOW)Checking Docker environment...$(NC)"
 	@command -v docker >/dev/null 2>&1 || { echo "$(RED)Docker not found. Please install Docker.$(NC)"; exit 1; }
 	@echo "$(GREEN)✓ Docker found:$(NC) $$(docker --version)"
-	@command -v docker-compose >/dev/null 2>&1 || { echo "$(RED)Docker Compose not found. Please install Docker Compose.$(NC)"; exit 1; }
-	@echo "$(GREEN)✓ Docker Compose found:$(NC) $$(docker-compose --version)"
+	@command -v docker compose >/dev/null 2>&1 || { echo "$(RED)Docker Compose not found. Please install Docker Compose.$(NC)"; exit 1; }
+	@echo "$(GREEN)✓ Docker Compose found:$(NC) $$(docker compose --version)"
 	@echo "$(GREEN)Docker environment check completed!$(NC)"
 
 .PHONY: docker-build
-docker-build: docker-check ## Build Docker development image
-	@echo "$(YELLOW)Building Docker development image...$(NC)"
-	@docker-compose build cynapus-dev
+docker-build: docker-check ## Build Docker development image (slim version)
+	@echo "$(YELLOW)Building Docker development image (slim)...$(NC)"
+	@docker compose build cynapus-dev
 	@echo "$(GREEN)Docker development image built!$(NC)"
+
+.PHONY: docker-build-full
+docker-build-full: docker-check ## Build Docker development image (full version)
+	@echo "$(YELLOW)Building Docker development image (full)...$(NC)"
+	@docker compose build cynapus-dev-full
+	@echo "$(GREEN)Docker full development image built!$(NC)"
+
+.PHONY: docker-build-slim
+docker-build-slim: docker-check ## Build Docker development image (slim version only)
+	@echo "$(YELLOW)Building Docker slim image...$(NC)"
+	@docker build -f Dockerfile.slim -t cynapus-android:slim .
+	@echo "$(GREEN)Docker slim image built!$(NC)"
 
 .PHONY: docker-build-all
 docker-build-all: docker-check ## Build all Docker images
 	@echo "$(YELLOW)Building all Docker images...$(NC)"
-	@docker-compose build
+	@docker compose build
 	@echo "$(GREEN)All Docker images built!$(NC)"
 
 .PHONY: docker-dev
 docker-dev: docker-build ## Start development environment in Docker
 	@echo "$(YELLOW)Starting Docker development environment...$(NC)"
-	@docker-compose up -d cynapus-dev
+	@docker compose up -d cynapus-dev
 	@echo "$(GREEN)Development environment started!$(NC)"
-	@echo "$(BLUE)To access the container: docker-compose exec cynapus-dev bash$(NC)"
+	@echo "$(BLUE)To access the container: docker compose exec cynapus-dev bash$(NC)"
 
 .PHONY: docker-shell
 docker-shell: ## Open shell in development container
 	@echo "$(YELLOW)Opening shell in development container...$(NC)"
-	@docker-compose exec cynapus-dev bash
+	@docker compose exec cynapus-dev bash
 
 .PHONY: docker-build-ci
 docker-build-ci: docker-check ## Run CI build in Docker
 	@echo "$(YELLOW)Running CI build in Docker...$(NC)"
-	@docker-compose run --rm cynapus-build
+	@docker compose run --rm cynapus-build
 	@echo "$(GREEN)Docker CI build completed!$(NC)"
 
 .PHONY: docker-test
 docker-test: docker-check ## Run tests in Docker
 	@echo "$(YELLOW)Running tests in Docker...$(NC)"
-	@docker-compose run --rm cynapus-test
+	@docker compose run --rm cynapus-test
 	@echo "$(GREEN)Docker tests completed!$(NC)"
 
 .PHONY: docker-production
 docker-production: docker-check ## Build production artifacts in Docker
 	@echo "$(YELLOW)Building production artifacts in Docker...$(NC)"
 	@mkdir -p build-output
-	@docker-compose run --rm cynapus-production
+	@docker compose run --rm cynapus-production
 	@echo "$(GREEN)Production artifacts built!$(NC)"
 	@echo "$(GREEN)Artifacts location:$(NC) ./build-output/"
 
@@ -233,21 +245,21 @@ docker-production: docker-check ## Build production artifacts in Docker
 docker-docs: docker-check ## Generate documentation in Docker
 	@echo "$(YELLOW)Generating documentation in Docker...$(NC)"
 	@mkdir -p docs-output
-	@docker-compose run --rm cynapus-docs
+	@docker compose run --rm cynapus-docs
 	@echo "$(GREEN)Documentation generated!$(NC)"
 	@echo "$(GREEN)Documentation location:$(NC) ./docs-output/"
 
 .PHONY: docker-clean
 docker-clean: ## Clean Docker containers and volumes
 	@echo "$(YELLOW)Cleaning Docker containers and volumes...$(NC)"
-	@docker-compose down -v
+	@docker compose down -v
 	@docker system prune -f
 	@echo "$(GREEN)Docker cleanup completed!$(NC)"
 
 .PHONY: docker-logs
 docker-logs: ## Show logs from Docker containers
 	@echo "$(YELLOW)Showing Docker container logs...$(NC)"
-	@docker-compose logs
+	@docker compose logs
 
 ##@ Cleaning
 

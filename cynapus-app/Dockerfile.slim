@@ -1,0 +1,62 @@
+# Cynapus Android Build Environment - Slim Version
+# Optimized for CI/CD and development
+
+FROM ubuntu:22.04
+
+# Environment setup
+ENV DEBIAN_FRONTEND=noninteractive
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:/opt/gradle/bin
+
+# Install essential packages in one layer
+RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
+    wget \
+    unzip \
+    curl \
+    git \
+    make \
+    build-essential \
+    ca-certificates \
+    sudo \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Download and install Android SDK Command Line Tools
+WORKDIR /opt
+RUN wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdtools.zip \
+    && mkdir -p ${ANDROID_HOME}/cmdline-tools \
+    && unzip cmdtools.zip -d ${ANDROID_HOME}/cmdline-tools \
+    && mv ${ANDROID_HOME}/cmdline-tools/cmdline-tools ${ANDROID_HOME}/cmdline-tools/latest \
+    && rm cmdtools.zip
+
+# Install Android SDK components
+RUN yes | sdkmanager --licenses > /dev/null 2>&1 || true \
+    && sdkmanager \
+        "platforms;android-34" \
+        "build-tools;34.0.0" \
+        "platform-tools" \
+    && rm -rf ${ANDROID_HOME}/.android
+
+# Download and install Gradle
+RUN wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip -O gradle.zip \
+    && unzip gradle.zip \
+    && mv gradle-8.5 /opt/gradle \
+    && rm gradle.zip
+
+# Create workspace
+WORKDIR /workspace
+
+# Create non-root user
+RUN useradd -m -s /bin/bash developer \
+    && echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && chown -R developer:developer /opt/android-sdk \
+    && chown -R developer:developer /workspace
+
+# Switch to non-root user
+USER developer
+
+# Default command
+CMD ["/bin/bash"]

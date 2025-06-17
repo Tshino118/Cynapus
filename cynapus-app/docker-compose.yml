@@ -1,12 +1,11 @@
 version: '3.8'
 
 services:
-  # Development environment
+  # Development environment - Slim version for faster builds
   cynapus-dev:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: development
+      dockerfile: Dockerfile.slim
     container_name: cynapus-development
     volumes:
       - .:/workspace
@@ -15,6 +14,28 @@ services:
     ports:
       - "8080:8080"  # Development server
       - "5037:5037"  # ADB
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - GRADLE_USER_HOME=/home/developer/.gradle
+    stdin_open: true
+    tty: true
+    networks:
+      - cynapus-network
+
+  # Development environment - Full version with all tools
+  cynapus-dev-full:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: cynapus-development-full
+    volumes:
+      - .:/workspace
+      - gradle-cache:/home/developer/.gradle
+      - android-cache:/home/developer/.android
+    ports:
+      - "8081:8080"  # Development server
+      - "5038:5037"  # ADB
     environment:
       - ANDROID_HOME=/opt/android-sdk
       - GRADLE_USER_HOME=/home/developer/.gradle

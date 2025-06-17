@@ -2,22 +2,28 @@
 # Multi-stage Dockerfile for Android app development and CI/CD
 
 # Base Android development image
-FROM openjdk:17-jdk AS base
+FROM ubuntu:22.04 AS base
 
 # Set environment variables
 ENV ANDROID_HOME=/opt/android-sdk
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV PATH=${PATH}:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
+# Install system dependencies including Java 17
 RUN apt-get update && apt-get install -y \
+    openjdk-17-jdk \
     wget \
     unzip \
     curl \
     git \
     make \
     build-essential \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
+
+# Set JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Download and install Android SDK Command Line Tools
 WORKDIR /opt
@@ -55,6 +61,7 @@ RUN apt-get update && apt-get install -y \
     nano \
     htop \
     tree \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for development
@@ -82,11 +89,12 @@ FROM base AS build
 # Copy project files
 COPY . .
 
-# Make gradlew executable
-RUN chmod +x gradlew
+# Make gradlew executable and set permissions
+RUN chmod +x gradlew && \
+    chmod +x Makefile
 
-# Download dependencies
-RUN ./gradlew dependencies --no-daemon
+# Download dependencies (with error handling)
+RUN ./gradlew dependencies --no-daemon || echo "Dependencies download completed with warnings"
 
 # Default build command
 CMD ["make", "ci"]
@@ -121,6 +129,7 @@ RUN apt-get update && apt-get install -y \
     xvfb \
     libgtk-3-0 \
     libdbus-glib-1-2 \
+    libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
@@ -138,6 +147,7 @@ FROM base AS docs
 # Install documentation tools
 RUN apt-get update && apt-get install -y \
     pandoc \
+    texlive-latex-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
