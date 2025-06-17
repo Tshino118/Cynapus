@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # Development environment
+  cynapus-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: cynapus-development
+    volumes:
+      - .:/workspace
+      - gradle-cache:/home/developer/.gradle
+      - android-cache:/home/developer/.android
+    ports:
+      - "8080:8080"  # Development server
+      - "5037:5037"  # ADB
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - GRADLE_USER_HOME=/home/developer/.gradle
+    stdin_open: true
+    tty: true
+    networks:
+      - cynapus-network
+
+  # Build environment for CI/CD
+  cynapus-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: build
+    container_name: cynapus-build
+    volumes:
+      - .:/workspace
+      - gradle-cache:/root/.gradle
+      - build-cache:/workspace/build
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false
+    command: make ci
+    networks:
+      - cynapus-network
+
+  # Production build
+  cynapus-production:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: cynapus-production
+    volumes:
+      - ./build-output:/output
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - GRADLE_OPTS=-Dorg.gradle.daemon=false
+    networks:
+      - cynapus-network
+
+  # Testing environment
+  cynapus-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: testing
+    container_name: cynapus-testing
+    volumes:
+      - .:/workspace
+      - gradle-cache:/root/.gradle
+      - test-reports:/workspace/app/build/reports
+    environment:
+      - ANDROID_HOME=/opt/android-sdk
+      - DISPLAY=:99
+    command: make test
+    networks:
+      - cynapus-network
+
+  # Documentation generation
+  cynapus-docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: docs
+    container_name: cynapus-docs
+    volumes:
+      - ./docs-output:/docs
+    networks:
+      - cynapus-network
+
+  # Artifacts extraction
+  cynapus-artifacts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: artifacts
+    container_name: cynapus-artifacts
+    volumes:
+      - ./artifacts:/artifacts
+    networks:
+      - cynapus-network
+
+volumes:
+  gradle-cache:
+    driver: local
+  android-cache:
+    driver: local
+  build-cache:
+    driver: local
+  test-reports:
+    driver: local
+
+networks:
+  cynapus-network:
+    driver: bridge
