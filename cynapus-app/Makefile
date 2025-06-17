@@ -10,6 +10,11 @@ APK_DIR := app/build/outputs/apk
 AAB_DIR := app/build/outputs/bundle
 GRADLE_WRAPPER := ./gradlew
 
+# Docker Configuration
+DOCKER_IMAGE := cynapus-android
+DOCKER_TAG := latest
+COMPOSE_FILE := docker-compose.yml
+
 # Android SDK Configuration
 ANDROID_HOME ?= /opt/android-sdk
 SDK_VERSION := 34
@@ -19,6 +24,7 @@ MIN_SDK_VERSION := 24
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
 RED := \033[0;31m
+BLUE := \033[0;34m
 NC := \033[0m # No Color
 
 # Default target
@@ -30,7 +36,7 @@ NC := \033[0m # No Color
 help: ## Display this help message
 	@echo "$(GREEN)$(PROJECT_NAME) Android App - Build Automation$(NC)"
 	@echo ""
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Environment Setup
 
@@ -168,6 +174,81 @@ logcat: ## Show logcat for the app
 	@echo "$(YELLOW)Showing logcat for $(APP_ID)...$(NC)"
 	@adb logcat | grep $(APP_ID)
 
+##@ Docker Commands
+
+.PHONY: docker-check
+docker-check: ## Check Docker environment
+	@echo "$(YELLOW)Checking Docker environment...$(NC)"
+	@command -v docker >/dev/null 2>&1 || { echo "$(RED)Docker not found. Please install Docker.$(NC)"; exit 1; }
+	@echo "$(GREEN)✓ Docker found:$(NC) $$(docker --version)"
+	@command -v docker-compose >/dev/null 2>&1 || { echo "$(RED)Docker Compose not found. Please install Docker Compose.$(NC)"; exit 1; }
+	@echo "$(GREEN)✓ Docker Compose found:$(NC) $$(docker-compose --version)"
+	@echo "$(GREEN)Docker environment check completed!$(NC)"
+
+.PHONY: docker-build
+docker-build: docker-check ## Build Docker development image
+	@echo "$(YELLOW)Building Docker development image...$(NC)"
+	@docker-compose build cynapus-dev
+	@echo "$(GREEN)Docker development image built!$(NC)"
+
+.PHONY: docker-build-all
+docker-build-all: docker-check ## Build all Docker images
+	@echo "$(YELLOW)Building all Docker images...$(NC)"
+	@docker-compose build
+	@echo "$(GREEN)All Docker images built!$(NC)"
+
+.PHONY: docker-dev
+docker-dev: docker-build ## Start development environment in Docker
+	@echo "$(YELLOW)Starting Docker development environment...$(NC)"
+	@docker-compose up -d cynapus-dev
+	@echo "$(GREEN)Development environment started!$(NC)"
+	@echo "$(BLUE)To access the container: docker-compose exec cynapus-dev bash$(NC)"
+
+.PHONY: docker-shell
+docker-shell: ## Open shell in development container
+	@echo "$(YELLOW)Opening shell in development container...$(NC)"
+	@docker-compose exec cynapus-dev bash
+
+.PHONY: docker-build-ci
+docker-build-ci: docker-check ## Run CI build in Docker
+	@echo "$(YELLOW)Running CI build in Docker...$(NC)"
+	@docker-compose run --rm cynapus-build
+	@echo "$(GREEN)Docker CI build completed!$(NC)"
+
+.PHONY: docker-test
+docker-test: docker-check ## Run tests in Docker
+	@echo "$(YELLOW)Running tests in Docker...$(NC)"
+	@docker-compose run --rm cynapus-test
+	@echo "$(GREEN)Docker tests completed!$(NC)"
+
+.PHONY: docker-production
+docker-production: docker-check ## Build production artifacts in Docker
+	@echo "$(YELLOW)Building production artifacts in Docker...$(NC)"
+	@mkdir -p build-output
+	@docker-compose run --rm cynapus-production
+	@echo "$(GREEN)Production artifacts built!$(NC)"
+	@echo "$(GREEN)Artifacts location:$(NC) ./build-output/"
+
+.PHONY: docker-docs
+docker-docs: docker-check ## Generate documentation in Docker
+	@echo "$(YELLOW)Generating documentation in Docker...$(NC)"
+	@mkdir -p docs-output
+	@docker-compose run --rm cynapus-docs
+	@echo "$(GREEN)Documentation generated!$(NC)"
+	@echo "$(GREEN)Documentation location:$(NC) ./docs-output/"
+
+.PHONY: docker-clean
+docker-clean: ## Clean Docker containers and volumes
+	@echo "$(YELLOW)Cleaning Docker containers and volumes...$(NC)"
+	@docker-compose down -v
+	@docker system prune -f
+	@echo "$(GREEN)Docker cleanup completed!$(NC)"
+
+.PHONY: docker-logs
+docker-logs: ## Show logs from Docker containers
+	@echo "$(YELLOW)Showing Docker container logs...$(NC)"
+	@docker-compose logs
+
 ##@ Cleaning
 
 .PHONY: clean
@@ -257,6 +338,10 @@ release-prep: clean deps lint test build-release bundle ## Prepare for release
 	@echo "  2. Update CHANGELOG.md"
 	@echo "  3. Create signed APK/AAB for distribution"
 	@echo "  4. Test on multiple devices"
+
+.PHONY: docker-dev-cycle
+docker-dev-cycle: docker-build-ci docker-test ## Complete Docker development cycle
+	@echo "$(GREEN)Docker development cycle completed!$(NC)"
 
 ##@ Information
 
